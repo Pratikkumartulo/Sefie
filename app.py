@@ -146,6 +146,7 @@ def webhook():
     print(data)
 
     message = data.get("message")
+    callback_query = data.get("callback_query")
 
     if message:
 
