@@ -304,6 +304,38 @@ def webhook():
           }
         }
         requests.post(url, json=payload)
+
+    def swap_task_status(chat_id, task_name):
+        data = get_today_tasks()
+        results = data["results"]
+        if not results:
+            return
+        page = results[0]
+        page_id = page["id"]
+        properties = page["properties"]
+        current_status = None
+        for name, value in properties.items():
+            if name == task_name and value["type"] == "checkbox":
+                current_status = value["checkbox"]
+                break
+        if current_status is None:
+            return
+        url = f"https://api.notion.com/v1/pages/{page_id}"
+        headers = {
+            "Authorization": f"Bearer {NOTION_TOKEN}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
+        }
+        payload = {
+            "properties": {
+                task_name: {
+                    "checkbox": not current_status
+                }
+            }
+        }
+        response = requests.patch(url, headers=headers, json=payload)
+        print(response.json())
+        send_text(chat_id, f"Task '{task_name}' status swapped.")
         
     data = request.json
     print(data)
@@ -332,6 +364,9 @@ def webhook():
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
+        elif callback_data.startswith("swap"):
+            selected_task = callback_data.split("_")[1]
+            swap_task_status(chat_id, selected_task)
         else:
           mark_task_complete(callback_data)
           send_fillup_message(chat_id)
