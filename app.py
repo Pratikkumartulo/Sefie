@@ -279,6 +279,32 @@ def webhook():
 
         send_text(chat_id, message)
 
+    def get_today_checked_tasks(chat_id):
+        url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/sendMessage"
+        data = get_today_tasks()
+        results = data["results"]
+        if not results:
+            return []
+        page = results[0]
+        properties = page["properties"]
+        buttons = []
+        for name, value in properties.items():
+            if value["type"] == "checkbox" and value["checkbox"] == True:
+                buttons.append([
+                    {
+                        "text": f"✅ {name}",
+                        "callback_data": f"swap_{name}"
+                    }
+                ])
+        payload = {
+        "chat_id": chat_id,
+        "text": "✅ Completed Tasks:",
+        "reply_markup": {
+            "inline_keyboard": buttons
+          }
+        }
+        requests.post(url, json=payload)
+        
     data = request.json
     print(data)
 
@@ -298,6 +324,7 @@ def webhook():
         if callback_data == "fillup":
             send_fillup_message(chat_id)
         elif callback_data == "edit":
+            get_today_checked_tasks(chat_id)
             send_edit_message(chat_id)
         elif callback_data == "view":
             show_date_buttons(chat_id)
