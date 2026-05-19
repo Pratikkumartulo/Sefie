@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import requests
 
 app = Flask(__name__)
 
@@ -79,8 +80,39 @@ def generate():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    BOT_TOKEN = "8786515157:AAGkqZ11FxahH-vE2kcgXFpzH6CjFVmL_Zc"
+    def send_message(chat_id):
+      url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+      text = """
+    🌱 Personal Habit System
+
+    📝 Fill Up Today's Tasks
+    ✏️ Edit Today's Tasks
+    📊 View Previous Records
+    """
+
+      payload = {
+            "chat_id": chat_id,
+            "text": text
+      }
+
+      requests.post(url, json=payload)
+
     data = request.json
+
     print(data)
+
+    message = data.get("message")
+
+    if message:
+
+        text = message.get("text")
+        chat_id = message["chat"]["id"]
+
+        if text == "/start":
+            send_message(chat_id)
+
     return "ok"
 
 # @app.route("/generate", methods=["POST"])
