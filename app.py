@@ -1,5 +1,8 @@
+from asyncio import tasks
+
 from flask import Flask, request, jsonify
 import requests
+from datetime import datetime
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -147,7 +150,27 @@ def webhook():
         }
 
         requests.post(url, json=payload)
-    
+    def get_today_tasks():
+        today = datetime.now().strftime("%Y-%m-%d")
+        url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+        headers = {
+            "Authorization": f"Bearer {NOTION_TOKEN}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
+        }
+        payload = {
+            "filter": {
+                "property": "Dates",
+                "date": {
+                    "equals": today
+                }
+            }
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        data = response.json()
+        print(data)
+        return data
+
     data = request.json
     print(data)
 
@@ -165,6 +188,8 @@ def webhook():
         chat_id = callback_query["message"]["chat"]["id"]
         print("Button clicked:", callback_data)
         if callback_data == "fillup":
+            tasks = get_today_tasks()
+            print(tasks)
             send_fillup_message(chat_id)
         elif callback_data == "edit":
             send_edit_message(chat_id)
