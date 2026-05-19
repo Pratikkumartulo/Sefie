@@ -12,7 +12,7 @@ app = Flask(__name__)
 @app.route("/generate", methods=["POST"])
 def generate():
     REPORT_API_KEY = os.getenv("REPORT_API_KEY")
-    api_key = request.headers.get("X-API-Key")
+    api_key = request.headers.get("Sefie-API-Key")
 
     if api_key != REPORT_API_KEY or api_key is None or REPORT_API_KEY is None:
         return "Unauthorized", 401
