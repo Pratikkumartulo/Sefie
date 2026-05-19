@@ -77,6 +77,12 @@ def generate():
         "html_message": html_message
     })
 
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.json
+    print(data)
+    return "ok"
+
 # @app.route("/generate", methods=["POST"])
 # def generate():
 
