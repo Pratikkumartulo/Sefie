@@ -94,9 +94,16 @@ def webhook():
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     DATABASE_ID = os.getenv("DATABASE_ID")
 
+    def send_text(chat_id, text):
+      url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+      payload = {
+          "chat_id": chat_id,
+          "text": text
+      }
+      requests.post(url, json=payload)
+
     def send_message(chat_id):
       url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-
       payload = {
         "chat_id": chat_id,
         "text": "🌱 Personal Habit System\n\nChoose an option:",
@@ -125,15 +132,9 @@ def webhook():
     }
 
       requests.post(url, json=payload)
+    
     def send_fillup_message(chat_id):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        def send_text(chat_id, text):
-            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            payload = {
-                "chat_id": chat_id,
-                "text": text
-            }
-            requests.post(url, json=payload)
         data = get_today_tasks()
         results = data["results"]
         if not results:
@@ -159,6 +160,7 @@ def webhook():
           }
         }
         requests.post(url, json=payload)
+    
     def send_edit_message(chat_id):
 
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -169,8 +171,8 @@ def webhook():
         }
 
         requests.post(url, json=payload)
+    
     def send_view_message(chat_id):
-
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
         payload = {
@@ -179,6 +181,7 @@ def webhook():
         }
 
         requests.post(url, json=payload)
+    
     def get_today_tasks():
         today = datetime.now().strftime("%Y-%m-%d")
         url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
@@ -199,6 +202,7 @@ def webhook():
         data = response.json()
         print(data)
         return data
+    
     def mark_task_complete(task_name):
         data = get_today_tasks()
         results = data["results"]
@@ -221,6 +225,7 @@ def webhook():
         }
         response = requests.patch(url, headers=headers, json=payload)
         print(response.json())
+    
     def show_date_buttons(chat_id):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         buttons = []
@@ -241,8 +246,38 @@ def webhook():
           }
         }
         requests.post(url, json=payload)
+    
+    def selected_date_tasks(chat_id, date):
+        url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
+        headers = {
+              "Authorization": f"Bearer {NOTION_TOKEN}",
+              "Content-Type": "application/json",
+              "Notion-Version": "2022-06-28"
+          }
+        payload = {
+              "filter": {
+                  "property": "Dates",
+                  "date": {
+                      "equals": date
+                  }
+              }
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        data = response.json()
+        results = data["results"]
+        if not results:
+            send_text(chat_id, "No task page found for today.")
+            return
+        page = results[0]
+        properties = page["properties"]
+        message = f"📅 Tasks for {date}:\n\n"
 
+        for name, value in properties.items():
+            if value["type"] == "checkbox":
+                status = "✅ Done" if value["checkbox"] else "❌ Not Done"
+                message += f"{status} — {name}\n"
 
+        send_text(chat_id, message)
 
     data = request.json
     print(data)
@@ -267,6 +302,9 @@ def webhook():
         elif callback_data == "view":
             show_date_buttons(chat_id)
             send_view_message(chat_id)
+        elif callback_data.startswith("date_"):
+            selected_date = callback_data.split("_")[1]
+            selected_date_tasks(chat_id, selected_date)
         else:
           mark_task_complete(callback_data)
           send_fillup_message(chat_id)
