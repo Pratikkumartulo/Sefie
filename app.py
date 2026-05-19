@@ -280,7 +280,7 @@ def webhook():
         send_text(chat_id, message)
 
     def get_today_checked_tasks(chat_id):
-        url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/sendMessage"
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         data = get_today_tasks()
         results = data["results"]
         if not results:
