@@ -11,7 +11,12 @@ app = Flask(__name__)
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    REPORT_API_KEY = os.getenv("REPORT_API_KEY")
+    api_key = request.headers.get("X-API-Key")
 
+    if api_key != REPORT_API_KEY:
+        return "Unauthorized", 401
+    
     body = request.json
 
     properties = body.get("properties_value", {})
