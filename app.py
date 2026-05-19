@@ -84,18 +84,32 @@ def webhook():
     def send_message(chat_id):
       url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-      text = """
-    🌱 Personal Habit System
-
-    📝 Fill Up Today's Tasks
-    ✏️ Edit Today's Tasks
-    📊 View Previous Records
-    """
-
       payload = {
-            "chat_id": chat_id,
-            "text": text
-      }
+        "chat_id": chat_id,
+        "text": "🌱 Personal Habit System\n\nChoose an option:",
+        "reply_markup": {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": "📝 Fill Up Today's Tasks",
+                        "callback_data": "fillup"
+                    }
+                ],
+                [
+                    {
+                        "text": "✏️ Edit Today's Tasks",
+                        "callback_data": "edit"
+                    }
+                ],
+                [
+                    {
+                        "text": "📊 View Previous Records",
+                        "callback_data": "view"
+                    }
+                ]
+            ]
+        }
+    }
 
       requests.post(url, json=payload)
 
