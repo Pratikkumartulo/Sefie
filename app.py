@@ -85,15 +85,18 @@ def generate():
     })
 
 
-
-
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    # Load environment variables
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     DATABASE_ID = os.getenv("DATABASE_ID")
+    ALLOWED_USER_ID = int(os.getenv("ALLOWED_USER_ID"))
 
+    # Helper functions
+    def is_authorized(user_id):
+      return user_id == ALLOWED_USER_ID
+    
     def send_text(chat_id, text):
       url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
       payload = {
@@ -132,7 +135,7 @@ def webhook():
     }
 
       requests.post(url, json=payload)
-    
+
     def send_fillup_message(chat_id):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         data = get_today_tasks()
@@ -335,21 +338,34 @@ def webhook():
         }
         response = requests.patch(url, headers=headers, json=payload)
         print(response.json())
-        send_text(chat_id, f"Task '{task_name}' status swapped.")
-        
+
+    #Extract Data from Telegram Webhook
     data = request.json
     print(data)
-
     message = data.get("message")
     callback_query = data.get("callback_query")
 
+    #Message Handling
     if message:
-        text = message.get("text")
+        user_id = message["from"]["id"]
         chat_id = message["chat"]["id"]
+        if not is_authorized(user_id):
+            send_text(chat_id, "🚫 Access denied.")
+            return "ok"
+        text = message.get("text")
         if text == "/start":
             send_message(chat_id)
+        else:
+            send_text(chat_id, "Please type /start to interact with the bot.")
 
     if callback_query:
+        user_id = callback_query["from"]["id"]
+        chat_id = callback_query["message"]["chat"]["id"]
+
+        if not is_authorized(user_id):
+            send_text(chat_id, "🚫 Access denied.")
+            return "ok"
+        
         callback_data = callback_query["data"]
         chat_id = callback_query["message"]["chat"]["id"]
         print("Button clicked:", callback_data)
@@ -372,7 +388,8 @@ def webhook():
         else:
           mark_task_complete(callback_data)
           send_message(chat_id)
-
+        
+    # Always return 200 OK to Telegram
     return "ok"
 
 # @app.route("/generate", methods=["POST"])
