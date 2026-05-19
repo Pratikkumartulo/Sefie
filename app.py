@@ -112,7 +112,35 @@ def webhook():
     }
 
       requests.post(url, json=payload)
+    def send_fillup_message(chat_id):
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
+        payload = {
+            "chat_id": chat_id,
+            "text": "📝 Fill Up Mode Activated"
+        }
+
+        requests.post(url, json=payload) 
+    def send_edit_message(chat_id):
+
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+        payload = {
+            "chat_id": chat_id,
+            "text": "✏️ Edit Mode Activated"
+        }
+
+        requests.post(url, json=payload)
+    def send_view_message(chat_id):
+
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+        payload = {
+            "chat_id": chat_id,
+            "text": "📊 View Mode Activated"
+        }
+
+        requests.post(url, json=payload)
     data = request.json
 
     print(data)
@@ -126,6 +154,27 @@ def webhook():
 
         if text == "/start":
             send_message(chat_id)
+        callback_query = data.get("callback_query")
+
+    if callback_query:
+
+        callback_data = callback_query["data"]
+
+        chat_id = callback_query["message"]["chat"]["id"]
+
+        print("Button clicked:", callback_data)
+
+        if callback_data == "fillup":
+
+            send_fillup_message(chat_id)
+
+        elif callback_data == "edit":
+
+            send_edit_message(chat_id)
+
+        elif callback_data == "view":
+
+            send_view_message(chat_id)
 
     return "ok"
 
