@@ -92,6 +92,12 @@ def webhook():
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     DATABASE_ID = os.getenv("DATABASE_ID")
     ALLOWED_USER_ID = int(os.getenv("ALLOWED_USER_ID"))
+    TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET")
+
+    #Check for telegram requests only
+    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+    if secret != TELEGRAM_WEBHOOK_SECRET:
+        return "Unauthorized", 401
 
     # Helper functions
     def is_authorized(user_id):
@@ -203,13 +209,14 @@ def webhook():
         }
         response = requests.post(url, headers=headers, json=payload)
         data = response.json()
-        print(data)
+        print("Webhook received")
         return data
     
-    def mark_task_complete(task_name):
+    def mark_task_complete(chat_id, task_name):
         data = get_today_tasks()
         results = data["results"]
         if not results:
+            send_text(chat_id, "No task page found for today.")
             return
         page = results[0]
         page_id = page["id"]
@@ -227,7 +234,8 @@ def webhook():
             }
         }
         response = requests.patch(url, headers=headers, json=payload)
-        print(response.json())
+        print("Notion query completed")
+        send_text(chat_id, f"Task '{task_name}' marked as complete.")
     
     def show_date_buttons(chat_id):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -337,11 +345,12 @@ def webhook():
             }
         }
         response = requests.patch(url, headers=headers, json=payload)
-        print(response.json())
+        print("Notion query completed")
+        send_text(chat_id, f"Task '{task_name}' status swapped to {'✅ Done' if not current_status else '❌ Not Done'}.")
 
     #Extract Data from Telegram Webhook
     data = request.json
-    print(data)
+    print("Webhook received")
     message = data.get("message")
     callback_query = data.get("callback_query")
 
@@ -386,7 +395,7 @@ def webhook():
             swap_task_status(chat_id, selected_task)
             send_message(chat_id)
         else:
-          mark_task_complete(callback_data)
+          mark_task_complete(chat_id, callback_data)
           send_message(chat_id)
         
     # Always return 200 OK to Telegram
