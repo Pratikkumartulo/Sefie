@@ -15,7 +15,13 @@ def generate():
     api_key = request.headers.get("Sefie-API-Key")
 
     if api_key != REPORT_API_KEY or api_key is None or REPORT_API_KEY is None:
-        return "Unauthorized", 401
+      if (api_key!=REPORT_API_KEY):
+        print(f"Unauthorized access attempt with API key: {api_key}")
+      if (api_key is None):
+        print("Unauthorized access attempt with missing API key.")
+      if (REPORT_API_KEY is None):
+        print("Server misconfiguration: REPORT_API_KEY is not set.")
+      return "Unauthorized", 401
     
     body = request.json
 
