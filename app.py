@@ -2,7 +2,7 @@ from asyncio import tasks
 
 from flask import Flask, request, jsonify
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -83,6 +83,10 @@ def generate():
         "telegram_message": telegram_message,
         "html_message": html_message
     })
+
+
+
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -217,6 +221,28 @@ def webhook():
         }
         response = requests.patch(url, headers=headers, json=payload)
         print(response.json())
+    def show_date_buttons(chat_id):
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        buttons = []
+        #Calculate the last 7 dates
+        for i in range(7):
+            date = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+            buttons.append([
+                {
+                    "text": date,
+                    "callback_data": f"date_{date}"
+                }
+            ])
+        payload = {
+        "chat_id": chat_id,
+        "text": "📅 Select a date:",
+        "reply_markup": {
+            "inline_keyboard": buttons
+          }
+        }
+        requests.post(url, json=payload)
+
+
 
     data = request.json
     print(data)
@@ -235,12 +261,11 @@ def webhook():
         chat_id = callback_query["message"]["chat"]["id"]
         print("Button clicked:", callback_data)
         if callback_data == "fillup":
-            tasks = get_today_tasks()
-            print(tasks)
             send_fillup_message(chat_id)
         elif callback_data == "edit":
             send_edit_message(chat_id)
         elif callback_data == "view":
+            show_date_buttons(chat_id)
             send_view_message(chat_id)
         else:
           mark_task_complete(callback_data)
