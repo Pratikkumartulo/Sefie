@@ -1,5 +1,8 @@
 from flask import Flask, request, jsonify
 import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -80,7 +83,10 @@ def generate():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    BOT_TOKEN = "8786515157:AAGkqZ11FxahH-vE2kcgXFpzH6CjFVmL_Zc"
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
+    NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+    DATABASE_ID = os.getenv("DATABASE_ID")
+
     def send_message(chat_id):
       url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
@@ -141,40 +147,28 @@ def webhook():
         }
 
         requests.post(url, json=payload)
+    
     data = request.json
-
     print(data)
 
     message = data.get("message")
     callback_query = data.get("callback_query")
 
     if message:
-
         text = message.get("text")
         chat_id = message["chat"]["id"]
-
         if text == "/start":
             send_message(chat_id)
-        callback_query = data.get("callback_query")
 
     if callback_query:
-
         callback_data = callback_query["data"]
-
         chat_id = callback_query["message"]["chat"]["id"]
-
         print("Button clicked:", callback_data)
-
         if callback_data == "fillup":
-
             send_fillup_message(chat_id)
-
         elif callback_data == "edit":
-
             send_edit_message(chat_id)
-
         elif callback_data == "view":
-
             send_view_message(chat_id)
 
     return "ok"
