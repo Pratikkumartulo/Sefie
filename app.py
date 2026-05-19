@@ -123,7 +123,7 @@ def webhook():
                 ],
                 [
                     {
-                        "text": "📊 View Previous Records",
+                        "text": "📊 View Records",
                         "callback_data": "view"
                     }
                 ]
@@ -356,20 +356,22 @@ def webhook():
         if callback_data == "fillup":
             send_fillup_message(chat_id)
         elif callback_data == "edit":
-            get_today_checked_tasks(chat_id)
             send_edit_message(chat_id)
+            get_today_checked_tasks(chat_id)
         elif callback_data == "view":
-            show_date_buttons(chat_id)
             send_view_message(chat_id)
+            show_date_buttons(chat_id)
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
+            send_message(chat_id)
         elif callback_data.startswith("swap"):
             selected_task = callback_data.split("_")[1]
             swap_task_status(chat_id, selected_task)
+            send_message(chat_id)
         else:
           mark_task_complete(callback_data)
-          send_fillup_message(chat_id)
+          send_message(chat_id)
 
     return "ok"
 
