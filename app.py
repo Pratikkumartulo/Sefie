@@ -123,13 +123,39 @@ def webhook():
       requests.post(url, json=payload)
     def send_fillup_message(chat_id):
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-
+        def send_text(chat_id, text):
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            payload = {
+                "chat_id": chat_id,
+                "text": text
+            }
+            requests.post(url, json=payload)
+        data = get_today_tasks()
+        results = data["results"]
+        if not results:
+            send_text(chat_id, "No task page found for today.")
+            return
+        page = results[0]
+        properties = page["properties"]
+        buttons = []
+        for name, value in properties.items():
+          if value["type"] == "checkbox":
+              if value["checkbox"] == False:
+                  buttons.append([
+                      {
+                          "text": f"☐ {name}",
+                          "callback_data": name
+                      }
+                  ])
         payload = {
-            "chat_id": chat_id,
-            "text": "📝 Fill Up Mode Activated"
+        "chat_id": chat_id,
+        "text": "📝 Incomplete Tasks:",
+        "reply_markup": {
+            "inline_keyboard": buttons
+          }
         }
+        requests.post(url, json=payload)
 
-        requests.post(url, json=payload) 
     def send_edit_message(chat_id):
 
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
