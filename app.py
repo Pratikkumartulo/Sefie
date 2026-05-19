@@ -155,7 +155,6 @@ def webhook():
           }
         }
         requests.post(url, json=payload)
-
     def send_edit_message(chat_id):
 
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -196,6 +195,28 @@ def webhook():
         data = response.json()
         print(data)
         return data
+    def mark_task_complete(task_name):
+        data = get_today_tasks()
+        results = data["results"]
+        if not results:
+            return
+        page = results[0]
+        page_id = page["id"]
+        url = f"https://api.notion.com/v1/pages/{page_id}"
+        headers = {
+            "Authorization": f"Bearer {NOTION_TOKEN}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
+        }
+        payload = {
+            "properties": {
+                task_name: {
+                    "checkbox": True
+                }
+            }
+        }
+        response = requests.patch(url, headers=headers, json=payload)
+        print(response.json())
 
     data = request.json
     print(data)
@@ -221,6 +242,9 @@ def webhook():
             send_edit_message(chat_id)
         elif callback_data == "view":
             send_view_message(chat_id)
+        else:
+          mark_task_complete(callback_data)
+          send_fillup_message(chat_id)
 
     return "ok"
 
