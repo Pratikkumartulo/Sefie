@@ -96,9 +96,10 @@ def generate():
     })
 
 
+user_states = {}
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    user_states = {}
     # Load environment variables
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
@@ -444,9 +445,14 @@ def webhook():
         text = message.get("text")
         state = user_states.get(chat_id)
 
+        print("MESSAGE CHAT ID:", chat_id)
+        print("CURRENT STATE:", user_states.get(chat_id))
+        print("ALL STATES:", user_states)
+
         if state and state.get("flow") == "add_next_task":
             handle_add_next_task_flow(chat_id, text)
             return "ok"
+
         
         if text == "/start":
             send_message(chat_id)
