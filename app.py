@@ -372,11 +372,9 @@ def webhook():
     def save_next_day_task(chat_id, payload):
         response = requests.post(
             f"{PYTHONANYWHERE_API_URL}/create_task",
-            headers={
-                "X-API-Key": PYTHONANYWHERE_API_KEY
-            },
             json=payload
         )
+        print(response.json())
         if response.status_code == 201:
             send_text(chat_id, "✅ Next day task saved successfully.")
         else:
