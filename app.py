@@ -477,6 +477,7 @@ def webhook():
                 "step": "date",
                 "data": {}
             }
+            print(user_states)
             send_text(chat_id, "📅 Enter task date in YYYY-MM-DD format:")
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
