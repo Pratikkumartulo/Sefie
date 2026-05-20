@@ -154,7 +154,7 @@ def webhook():
                 [
                     {
                         "text": "➕ Add Next Day Task",
-                        "callback_data": "add_next_task"
+                        "callback_data": "/addtask"
                     }
                 ]
             ]
@@ -446,14 +446,24 @@ def webhook():
         print("MESSAGE CHAT ID:", chat_id)
         print("CURRENT STATE:", user_states.get(chat_id))
         print("ALL STATES:", user_states)
+     
+        if text == "/start":
+            send_message(chat_id)
+
+        if text == "/addtask":
+            user_states[chat_id] = {
+                "flow": "add_next_task",
+                "step": "date",
+                "data": {}
+            }
+            send_text(chat_id, "📅 Enter task date in YYYY-MM-DD format:")
+            return "ok"
+
+        state = user_states.get(chat_id)
 
         if state and state.get("flow") == "add_next_task":
             handle_add_next_task_flow(chat_id, text)
             return "ok"
-
-        
-        if text == "/start":
-            send_message(chat_id)
         else:
             send_text(chat_id, "Please type /start to interact with the bot.")
 
@@ -475,14 +485,6 @@ def webhook():
         elif callback_data == "view":
             send_view_message(chat_id)
             show_date_buttons(chat_id)
-        elif callback_data == "add_next_task":
-            user_states[chat_id] = {
-                "flow": "add_next_task",
-                "step": "date",
-                "data": {}
-            }
-            print(user_states)
-            send_text(chat_id, "📅 Enter task date in YYYY-MM-DD format:")
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
