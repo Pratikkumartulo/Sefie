@@ -98,12 +98,15 @@ def generate():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    user_states = {}
     # Load environment variables
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     NOTION_TOKEN = os.getenv("NOTION_TOKEN")
     DATABASE_ID = os.getenv("DATABASE_ID")
     ALLOWED_USER_ID = int(os.getenv("ALLOWED_USER_ID"))
     TELEGRAM_WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET")
+    PYTHONANYWHERE_API_URL = os.getenv("PYTHONANYWHERE_API_URL")
+    PYTHONANYWHERE_API_KEY = os.getenv("PYTHONANYWHERE_API_KEY")
 
     #Check for telegram requests only
     secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
@@ -145,6 +148,12 @@ def webhook():
                     {
                         "text": "📊 View Records",
                         "callback_data": "view"
+                    }
+                ],
+                [
+                    {
+                        "text": "➕ Add Next Day Task",
+                        "callback_data": "add_next_task"
                     }
                 ]
             ]
@@ -359,6 +368,66 @@ def webhook():
         print("Notion query completed")
         send_text(chat_id, f"Task '{task_name}' status swapped to {'✅ Done' if not current_status else '❌ Not Done'}.")
 
+    def save_next_day_task(chat_id, payload):
+        response = requests.post(
+            f"{PYTHONANYWHERE_API_URL}/create_task",
+            headers={
+                "X-API-Key": PYTHONANYWHERE_API_KEY
+            },
+            json=payload
+        )
+        if response.status_code == 201:
+            send_text(chat_id, "✅ Next day task saved successfully.")
+        else:
+            send_text(chat_id, f"❌ Failed to save task. Status: {response.status_code}")
+
+    def handle_add_next_task_flow(chat_id, text):
+        state = user_states.get(chat_id)
+        step = state["step"]
+        data = state["data"]
+
+        if step == "date":
+            data["Date"] = text.strip()
+            state["step"] = "day"
+            send_text(chat_id, "🔢 Enter day number:")
+            return
+
+        if step == "day":
+            try:
+                data["Day"] = int(text.strip())
+            except ValueError:
+                send_text(chat_id, "❌ Day must be a number. Try again:")
+                return
+
+            state["step"] = "si_vd"
+            send_text(chat_id, "🎥 Send SI video link:")
+            return
+
+        if step == "si_vd":
+            data["SI_Vd"] = text.strip()
+            state["step"] = "si_desc"
+            send_text(chat_id, "📝 Send SI video description:")
+            return
+
+        if step == "si_desc":
+            data["SI_desc"] = text.strip()
+            state["step"] = "jp_vd"
+            send_text(chat_id, "🎥 Send JP video link:")
+            return
+
+        if step == "jp_vd":
+            data["JP_Vd"] = text.strip()
+            state["step"] = "jp_desc"
+            send_text(chat_id, "📝 Send JP video description:")
+            return
+
+        if step == "jp_desc":
+            data["JP_desc"] = text.strip()
+
+            save_next_day_task(chat_id, data)
+
+            user_states.pop(chat_id, None)
+            return
     #Extract Data from Telegram Webhook
     data = request.json
     print("Webhook received")
@@ -373,6 +442,12 @@ def webhook():
             send_text(chat_id, "🚫 Access denied.")
             return "ok"
         text = message.get("text")
+        state = user_states.get(chat_id)
+
+        if state and state.get("flow") == "add_next_task":
+            handle_add_next_task_flow(chat_id, text)
+            return "ok"
+        
         if text == "/start":
             send_message(chat_id)
         else:
@@ -396,6 +471,13 @@ def webhook():
         elif callback_data == "view":
             send_view_message(chat_id)
             show_date_buttons(chat_id)
+        elif callback_data == "add_next_task":
+            user_states[chat_id] = {
+                "flow": "add_next_task",
+                "step": "date",
+                "data": {}
+            }
+            send_text(chat_id, "📅 Enter task date in YYYY-MM-DD format:")
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
