@@ -370,15 +370,20 @@ def webhook():
         send_text(chat_id, f"Task '{task_name}' status swapped to {'✅ Done' if not current_status else '❌ Not Done'}.")
 
     def save_next_day_task(chat_id, payload):
-        response = requests.post(
-            f"{PYTHONANYWHERE_API_URL}/create_task",
-            json=payload
-        )
-        print(response.json())
-        if response.status_code == 201:
-            send_text(chat_id, "✅ Next day task saved successfully.")
-        else:
-            send_text(chat_id, f"❌ Failed to save task. Status: {response.status_code}")
+        try:
+            response = requests.post(
+                f"{PYTHONANYWHERE_API_URL}/create_task",
+                json=payload,
+                timeout=10
+            )
+
+            if response.status_code == 201:
+                send_text(chat_id, "✅ Task saved successfully.")
+            else:
+                send_text(chat_id, f"❌ API Error: {response.status_code}")
+
+        except requests.exceptions.RequestException as e:
+            send_text(chat_id, f"❌ Connection Error:\n{str(e)}")
 
     def handle_add_next_task_flow(chat_id, text):
         state = user_states.get(chat_id)
