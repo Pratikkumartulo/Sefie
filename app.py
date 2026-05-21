@@ -450,6 +450,7 @@ def webhook():
      
         if text == "/start":
             send_message(chat_id)
+            return "ok"
 
         if text == "/addtask":
             user_states[chat_id] = {
