@@ -443,6 +443,7 @@ def webhook():
         text = message.get("text")
         state = user_states.get(chat_id)
 
+        print(text)
         print("MESSAGE CHAT ID:", chat_id)
         print("CURRENT STATE:", user_states.get(chat_id))
         print("ALL STATES:", user_states)
