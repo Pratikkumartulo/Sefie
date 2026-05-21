@@ -150,12 +150,6 @@ def webhook():
                         "text": "📊 View Records",
                         "callback_data": "view"
                     }
-                ],
-                [
-                    {
-                        "text": "➕ Add Next Day Task",
-                        "callback_data": "/addtask"
-                    }
                 ]
             ]
         }
@@ -373,6 +367,7 @@ def webhook():
         try:
             response = requests.post(
                 f"{PYTHONANYWHERE_API_URL}/create_task",
+                headers={"P-API-KEY": PYTHONANYWHERE_API_KEY},
                 json=payload,
                 timeout=10
             )
