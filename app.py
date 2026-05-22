@@ -442,6 +442,8 @@ def webhook():
                 timeout=10
             )
 
+            print(response)
+
             if response.success:
                 latest_task = response.data
                 print(latest_task)
