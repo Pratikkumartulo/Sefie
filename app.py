@@ -513,7 +513,7 @@ def webhook():
             send_view_message(chat_id)
             show_date_buttons(chat_id)
         elif callback_data == "getLatest":
-            pass
+            get_latestTask(chat_id)
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
