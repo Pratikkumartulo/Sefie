@@ -150,6 +150,12 @@ def webhook():
                         "text": "📊 View Records",
                         "callback_data": "view"
                     }
+                ],
+                [
+                    {
+                        "text":"View Latest",
+                        "callback_data":"getLatest"
+                    }
                 ]
             ]
         }
@@ -427,6 +433,25 @@ def webhook():
 
             user_states.pop(chat_id, None)
             return
+    
+    def get_latestTask(chat_id):
+        try:
+            response = requests.get(
+                f"{PYTHONANYWHERE_API_URL}/latest",
+                headers={"P-API-KEY": PYTHONANYWHERE_API_KEY},
+                timeout=10
+            )
+
+            if response.success:
+                latest_task = response.data
+                print(latest_task)
+            else:
+                send_text(chat_id, f"❌ API Error: {response.status_code}")
+
+        except requests.exceptions.RequestException as e:
+            send_text(chat_id, f"❌ Connection Error:\n{str(e)}")
+
+
     #Extract Data from Telegram Webhook
     data = request.json
     print("Webhook received")
@@ -487,6 +512,8 @@ def webhook():
         elif callback_data == "view":
             send_view_message(chat_id)
             show_date_buttons(chat_id)
+        elif callback_data == "getLatest":
+            pass
         elif callback_data.startswith("date_"):
             selected_date = callback_data.split("_")[1]
             selected_date_tasks(chat_id, selected_date)
