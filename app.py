@@ -442,13 +442,19 @@ def webhook():
                 timeout=10
             )
 
-            print(response)
-
-            if response.success:
-                latest_task = response.data
-                print(latest_task)
-            else:
-                send_text(chat_id, f"❌ API Error: {response.status_code}")
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    task = result.get("data")
+                    message = f"📅 Date: {task.get('Date')}\n"
+                    message += f"🔢 Day: {task.get('Day')}\n"
+                    message += f"🎥 SI Video: \n{task.get('SI_Vd')}\n"
+                    message += f"📝 SI Description: \n{task.get('SI_desc')}\n"
+                    message += f"🎥 JP Video: \n{task.get('JP_Vd')}\n"
+                    message += f"📝 JP Description: \n{task.get('JP_desc')}"
+                    send_text(chat_id, message)
+                else:
+                    send_text(chat_id, "❌ Failed to retrieve latest task.")
 
         except requests.exceptions.RequestException as e:
             send_text(chat_id, f"❌ Connection Error:\n{str(e)}")
